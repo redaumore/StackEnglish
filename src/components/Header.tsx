@@ -7,10 +7,11 @@ import {
   Settings as SettingsIcon,
   Sun,
   Moon,
+  MessageSquareQuote,
 } from 'lucide-react';
 import type { UserSettings } from '../types/srs';
 
-export type NavTab = 'dashboard' | 'study' | 'cards' | 'settings';
+export type NavTab = 'dashboard' | 'study' | 'cards' | 'scripts' | 'settings';
 
 interface HeaderProps {
   currentTab: NavTab;
@@ -92,6 +93,18 @@ export const Header: React.FC<HeaderProps> = ({
                 {dueCount}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => onSelectTab('scripts')}
+            className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+              currentTab === 'scripts'
+                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900'
+            }`}
+          >
+            <MessageSquareQuote className="w-4 h-4" />
+            <span>Speaking Scripts</span>
           </button>
 
           <button

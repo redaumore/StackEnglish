@@ -8,6 +8,8 @@ import {
   Plus,
   Play,
   Zap,
+  MessageSquareQuote,
+  Brain,
 } from 'lucide-react';
 import type { Category, DeckStats, UserSettings } from '../types/srs';
 import { ALL_CATEGORIES, CATEGORY_STYLES } from '../utils/categoryColors';
@@ -15,10 +17,11 @@ import { ALL_CATEGORIES, CATEGORY_STYLES } from '../utils/categoryColors';
 interface DashboardProps {
   stats: DeckStats;
   settings: UserSettings;
-  onStartStudy: (category?: Category | 'All') => void;
+  onStartStudy: (category?: Category | 'All', mode?: 'standard' | 'reviewed_only' | 'all') => void;
   onOpenAddCard: () => void;
   onOpenCardList: () => void;
   onOpenSettings: () => void;
+  onOpenScripts?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -27,6 +30,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onStartStudy,
   onOpenAddCard,
   onOpenCardList,
+  onOpenScripts,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
 
@@ -59,7 +63,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {onOpenScripts && (
+            <button
+              onClick={onOpenScripts}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 transition-all cursor-pointer shadow-xs"
+            >
+              <MessageSquareQuote className="w-4 h-4 text-indigo-500" />
+              <span>Speaking Scripts</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenAddCard}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 transition-all cursor-pointer shadow-xs"
@@ -245,13 +259,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={() => onStartStudy(selectedCategory)}
-              className="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Start Daily Study</span>
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={() => onStartStudy(selectedCategory, 'standard')}
+                className="w-full py-3 px-5 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>Start Daily Session</span>
+              </button>
+
+              {stats.learningCardsCount + stats.masteredCardsCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onStartStudy(selectedCategory, 'reviewed_only')}
+                  className="w-full py-2 px-3 rounded-xl font-semibold text-xs bg-slate-800/90 hover:bg-slate-700 text-amber-300 border border-amber-500/30 hover:border-amber-500/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Brain className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Practice Studied Cards ({stats.learningCardsCount + stats.masteredCardsCount} Active Recall)</span>
+                </button>
+              )}
+            </div>
 
             <div className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
               <span>Shortcuts:</span>

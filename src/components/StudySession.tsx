@@ -81,8 +81,13 @@ export const StudySession = ({
         cardsStudied: [...prev.cardsStudied, { card: currentCard, grade }],
       }));
 
+      const reviewedCard: SRSCard = {
+        ...currentCard,
+        lastReviewed: new Date().toISOString(),
+      };
+
       if (grade === 1) {
-        setQueue((prev) => [...prev, currentCard]);
+        setQueue((prev) => [...prev, reviewedCard]);
       }
 
       if (currentIndex + 1 < queue.length) {

@@ -194,11 +194,19 @@ export function useSRS() {
   }, [cards, reviewLogs]);
 
   const getSessionCards = useCallback(
-    (categoryFilter?: Category | 'All'): SRSCard[] => {
+    (categoryFilter?: Category | 'All', mode: 'standard' | 'reviewed_only' | 'all' = 'standard'): SRSCard[] => {
       const now = new Date();
       let pool = cards;
       if (categoryFilter && categoryFilter !== 'All') {
         pool = cards.filter((c) => c.category === categoryFilter);
+      }
+
+      if (mode === 'reviewed_only') {
+        return pool.filter((c) => !isCardNew(c));
+      }
+
+      if (mode === 'all') {
+        return pool;
       }
 
       const dueCards = pool.filter((c) => isCardDue(c, now));

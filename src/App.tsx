@@ -7,6 +7,7 @@ import { CardList } from './components/CardList';
 import { CardModal } from './components/CardModal';
 import { ImportExportModal } from './components/ImportExportModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ScriptsView } from './components/scripts/ScriptsView';
 import { useSRS } from './hooks/useSRS';
 import type { Category, SRSCard } from './types/srs';
 
@@ -53,9 +54,12 @@ export function App() {
   }, [settings.theme]);
 
   // Launch study session
-  const handleStartStudy = (category: Category | 'All' = 'All') => {
+  const handleStartStudy = (
+    category: Category | 'All' = 'All',
+    mode: 'standard' | 'reviewed_only' | 'all' = 'standard'
+  ) => {
     setStudyCategory(category);
-    const batch = getSessionCards(category);
+    const batch = getSessionCards(category, mode);
     setStudySessionBatch(batch);
     setCurrentTab('study');
   };
@@ -115,6 +119,7 @@ export function App() {
             }}
             onOpenCardList={() => setCurrentTab('cards')}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenScripts={() => setCurrentTab('scripts')}
           />
         )}
 
@@ -148,6 +153,13 @@ export function App() {
             onDeleteCard={deleteCard}
             onResetCardProgress={resetCardProgress}
             onOpenImportExport={() => setIsImportExportOpen(true)}
+          />
+        )}
+
+        {currentTab === 'scripts' && (
+          <ScriptsView
+            settings={settings}
+            onAddCardToSRS={addCard}
           />
         )}
       </main>
