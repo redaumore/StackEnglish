@@ -54,6 +54,7 @@ export interface UserSettings {
   autoPlaySentenceAudio: boolean;
   ttsProvider: TTSProvider;
   openAIApiKey: string;
+  geminiApiKey?: string;
   openAIVoice: OpenAIVoice;
   openAIModel: OpenAIModel;
 }

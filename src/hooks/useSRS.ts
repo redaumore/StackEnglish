@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Category, DeckStats, Grade, ReviewLog, SRSCard, UserSettings } from '../types/srs';
 import { DEFAULT_DECK } from '../data/defaultDeck';
 import { calculateSM2, isCardDue, isCardMastered, isCardNew } from '../utils/sm2';
+import { getEnvOpenAIApiKey, getEnvGeminiApiKey } from '../utils/env';
 
 const STORAGE_KEYS = {
   CARDS: 'anki4devs_cards_v1',
@@ -17,8 +18,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   theme: 'dark',
   autoPlayPhraseAudio: false,
   autoPlaySentenceAudio: false,
-  ttsProvider: 'web-speech',
-  openAIApiKey: '',
+  ttsProvider: getEnvOpenAIApiKey() ? 'openai' : 'web-speech',
+  openAIApiKey: getEnvOpenAIApiKey(),
+  geminiApiKey: getEnvGeminiApiKey(),
   openAIVoice: 'alloy',
   openAIModel: 'tts-1',
 };
@@ -89,10 +91,28 @@ export function useSRS() {
   });
 
   const [settings, setSettings] = useState<UserSettings>(() => {
+    const envOpenAI = getEnvOpenAIApiKey();
+    const envGemini = getEnvGeminiApiKey();
+
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
       if (stored) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        const resolvedOpenAI = parsed.openAIApiKey?.trim() ? parsed.openAIApiKey : envOpenAI;
+        const resolvedGemini = parsed.geminiApiKey?.trim() ? parsed.geminiApiKey : envGemini;
+        // If envOpenAI exists and user hasn't explicitly set ttsProvider or it was default web-speech with no key, prefer openai
+        const resolvedProvider =
+          parsed.ttsProvider === 'openai' || (envOpenAI && !parsed.openAIApiKey)
+            ? 'openai'
+            : parsed.ttsProvider || DEFAULT_SETTINGS.ttsProvider;
+
+        return {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          openAIApiKey: resolvedOpenAI,
+          geminiApiKey: resolvedGemini,
+          ttsProvider: resolvedProvider,
+        };
       }
     } catch (e) {
       console.error('Failed to load settings from storage', e);

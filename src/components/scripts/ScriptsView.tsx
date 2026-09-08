@@ -14,6 +14,7 @@ import { ScriptPlayer } from './ScriptPlayer';
 import { ScriptGeneratorModal } from './ScriptGeneratorModal';
 import { DefinitionModal } from './DefinitionModal';
 import { DictionaryService } from '../../services/DictionaryService';
+import { getEnvOpenAIApiKey } from '../../utils/env';
 
 interface ScriptsViewProps {
   settings: UserSettings;
@@ -24,6 +25,8 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
   settings,
   onAddCardToSRS,
 }) => {
+  const effectiveOpenAIKey = (settings.openAIApiKey || getEnvOpenAIApiKey())?.trim();
+
   const {
     scripts,
     activeScript,
@@ -31,9 +34,18 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
     isGenerating,
     selectScript,
     deleteScript,
+    updateScriptScore,
     generateNewScript,
     restoreSeedScripts,
-  } = useScripts(settings.openAIApiKey);
+  } = useScripts(effectiveOpenAIKey);
+
+  const getScoreBadgeClass = (score: number | null | undefined): string => {
+    if (score === null || score === undefined) return 'text-slate-400 border-slate-500/30 bg-slate-500/10';
+    if (score >= 8.5) return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+    if (score >= 6.0) return 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10';
+    if (score >= 5.0) return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+    return 'text-rose-400 border-rose-500/30 bg-rose-500/10';
+  };
 
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<Category | 'All'>('All');
@@ -53,7 +65,7 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
       const def = await DictionaryService.lookup(
         term,
         contextSentence,
-        settings.openAIApiKey,
+        effectiveOpenAIKey,
         activeScript?.category
       );
       setActiveDefinition(def);
@@ -184,6 +196,15 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
                           <span className="text-[10px] text-slate-400">
                             {s.lines.length} turns
                           </span>
+                          {s.lastScore !== undefined && s.lastScore !== null && (
+                            <span
+                              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold font-mono border ${getScoreBadgeClass(
+                                s.lastScore
+                              )}`}
+                            >
+                              {s.lastScore.toFixed(1)} / 10.0
+                            </span>
+                          )}
                         </div>
                         <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
                           {s.title}
@@ -229,6 +250,8 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
                 setIsDefModalOpen(true);
               }}
               onRequestDefinitionLookup={handleRequestDefinitionLookup}
+              onAddCardToSRS={onAddCardToSRS}
+              onScoreUpdate={updateScriptScore}
             />
           ) : (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center text-slate-400 space-y-3">
@@ -245,7 +268,7 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
         onClose={() => setIsGeneratorOpen(false)}
         onGenerate={generateNewScript}
         isGenerating={isGenerating}
-        hasOpenAIKey={Boolean(settings.openAIApiKey?.trim())}
+        hasOpenAIKey={Boolean(effectiveOpenAIKey)}
       />
 
       {/* Definition & Save to Anki Modal */}

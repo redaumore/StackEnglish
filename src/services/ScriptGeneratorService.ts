@@ -1,5 +1,6 @@
 import type { ConversationScript, GenerateScriptParams, ScriptCharacter } from '../types/script';
 import { SEED_SCRIPTS } from '../data/seedScripts';
+import { getEnvOpenAIApiKey } from '../utils/env';
 
 export class ScriptGeneratorService {
   /**
@@ -9,7 +10,8 @@ export class ScriptGeneratorService {
     params: GenerateScriptParams,
     apiKey?: string
   ): Promise<ConversationScript> {
-    if (!apiKey || !apiKey.trim()) {
+    const effectiveApiKey = (apiKey || getEnvOpenAIApiKey())?.trim();
+    if (!effectiveApiKey) {
       // Offline fallback: find matching seed or synthesize tailored template
       const matchingSeed = SEED_SCRIPTS.find((s) => s.category === params.category);
       if (matchingSeed) {
@@ -77,7 +79,7 @@ Generate between 5 to 8 total dialogue turns.`;
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey.trim()}`,
+        Authorization: `Bearer ${effectiveApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

@@ -22,6 +22,13 @@
   - `2`: Hard (1.2x interval)
   - `3`: Good (Standard SM-2 interval * EF)
   - `4`: Easy (1.3x interval boost)
+- **Speaking Scripts & Multimodal Speech Evaluation**:
+  - Interactive technical dialogue simulator between software engineers (Architects, Leads, SREs, Product Managers).
+  - Client-side audio recording (`useAudioRecorder`) across Chromium, Firefox, and Safari via `MediaRecorder`.
+  - Multimodal AI speech evaluation calibrated on a `0.0 - 10.0` scale evaluating stress, rhythm, and intelligibility against target dialogue lines.
+  - Inline phonetic highlighting and tooltips for phoneme, word stress, omitted sounds, and added sounds (`SpeechAnnotationTooltip`).
+  - One-click "Add to Anki" button directly from pronunciation feedback tooltips.
+  - Strict dialogue completion threshold: dialogues require an average score $\ge 7.0$ to pass; sessions under 7.0 prompt targeted retries.
 - **Embedded 110-Phrase Starter Deck**: Meticulously curated with authentic engineering vocabulary (e.g. *thundering herd with jitter*, *blast radius mitigation*, *de-scoping non-critical features*).
 - **Deck Library & CRUD**: Instant search, filter by meeting context and status, create custom phrases, edit, and delete.
 - **Zero-Setup Offline Storage**: LocalStorage persistence with 1-click JSON backup and merge/replace JSON import.
@@ -32,10 +39,31 @@
 ## 🛠️ Tech Stack
 
 - **Framework**: React 19 + TypeScript + Vite
+- **Validation**: Zod runtime schema validation
+- **AI Models & Speech Evaluation (OpenAI)**:
+  - **Transcription**: OpenAI Whisper (`whisper-1`) for acoustic speech recognition
+  - **Pronunciation & Dialogue Evaluation**: OpenAI `gpt-4o-mini` with structured JSON output
+  - **Speech Synthesis (TTS)**: OpenAI `tts-1` & `tts-1-hd` neural voices (`alloy`, `nova`, `onyx`, `echo`, `fable`, `shimmer`)
 - **Styling**: Tailwind CSS v4
 - **Icons**: Lucide React
 - **Celebration & Sound**: Canvas Confetti & Web Audio API synthesis
-- **TTS**: Native Browser `window.speechSynthesis`
+- **TTS Fallback**: Native Browser `window.speechSynthesis`
+
+---
+
+## ⚙️ Environment Configuration (`.env`)
+
+You can provide your OpenAI API key via a `.env` file at the root of the project:
+
+```bash
+# .env
+OPENAI_API_KEY=sk-proj-...
+```
+
+- When `OPENAI_API_KEY` is present in `.env`:
+  - **Flashcards**: Automatically activates **OpenAI Neural TTS (`tts-1`)** for authentic pronunciation of phrases and example meeting sentences with local IndexedDB caching.
+  - **Speech & Pronunciation Evaluation**: Evaluates dialogues using **OpenAI Whisper (`whisper-1`)** and **`gpt-4o-mini`** for phoneme, stress, and fluency feedback on a 0.0–10.0 scale.
+  - **Speaking Scripts & Dictionary**: Automatically generates tailored workplace dialogues and looks up technical definitions without manual key entry.
 
 ---
 
@@ -46,7 +74,13 @@
 npm install
 ```
 
-### 2. Start development server
+### 2. Configure environment (optional)
+```bash
+cp .env.example .env
+# Edit .env and paste your OPENAI_API_KEY
+```
+
+### 3. Start development server
 ```bash
 npm run dev
 ```

@@ -4,6 +4,7 @@ import type { SpeechVoiceOption } from '../services/SpeechService';
 import { OpenAITTSService } from '../services/OpenAITTSService';
 import { AudioCacheService } from '../services/AudioCacheService';
 import type { UserSettings } from '../types/srs';
+import { getEnvOpenAIApiKey } from '../utils/env';
 
 export function useTTS(settings?: Partial<UserSettings>) {
   const [voices, setVoices] = useState<SpeechVoiceOption[]>([]);
@@ -68,13 +69,14 @@ export function useTTS(settings?: Partial<UserSettings>) {
       OpenAITTSService.stop();
 
       // Check provider
-      if (activeSettings.ttsProvider === 'openai' && activeSettings.openAIApiKey?.trim()) {
+      const resolvedApiKey = (activeSettings.openAIApiKey || getEnvOpenAIApiKey())?.trim();
+      if (activeSettings.ttsProvider === 'openai' && resolvedApiKey) {
         setIsLoading(true);
         try {
           await OpenAITTSService.playAudio(
             text,
             {
-              apiKey: activeSettings.openAIApiKey,
+              apiKey: resolvedApiKey,
               voice: activeSettings.openAIVoice || 'alloy',
               model: activeSettings.openAIModel || 'tts-1',
               speed: activeSettings.playbackRate || rate || 1.0,

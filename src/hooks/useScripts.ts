@@ -64,6 +64,12 @@ export function useScripts(openAIApiKey?: string) {
     setActiveScriptId(scriptId);
   }, []);
 
+  const updateScriptScore = useCallback((scriptId: string, score: number) => {
+    setScripts((prev) =>
+      prev.map((s) => (s.id === scriptId ? { ...s, lastScore: score } : s))
+    );
+  }, []);
+
   const generateNewScript = useCallback(
     async (params: GenerateScriptParams) => {
       setIsGenerating(true);
@@ -98,6 +104,7 @@ export function useScripts(openAIApiKey?: string) {
     saveScript,
     deleteScript,
     selectScript,
+    updateScriptScore,
     generateNewScript,
     restoreSeedScripts,
   };

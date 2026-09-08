@@ -25,6 +25,7 @@ export interface ConversationScript {
   characters: ScriptCharacter[];
   lines: DialogueLine[];
   userRoleCharacterId?: string; // Optional character assigned to the user to read aloud
+  lastScore?: number; // Latest overall pronunciation score obtained (0.0 - 10.0)
   createdAt: string;
 }
 

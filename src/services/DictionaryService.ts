@@ -1,5 +1,6 @@
 import type { Category } from '../types/srs';
 import type { WordDefinition } from '../types/script';
+import { getEnvOpenAIApiKey } from '../utils/env';
 
 export class DictionaryService {
   /**
@@ -46,12 +47,13 @@ export class DictionaryService {
     }
 
     // If phrase or dictionary API failed, try OpenAI if API key is provided
-    if (openAIApiKey && openAIApiKey.trim()) {
+    const effectiveApiKey = (openAIApiKey || getEnvOpenAIApiKey())?.trim();
+    if (effectiveApiKey) {
       try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${openAIApiKey.trim()}`,
+            Authorization: `Bearer ${effectiveApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({

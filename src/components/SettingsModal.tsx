@@ -13,9 +13,11 @@ import {
   EyeOff,
   Zap,
   Loader2,
+  Mic,
 } from 'lucide-react';
 import type { OpenAIVoice, OpenAIModel, UserSettings } from '../types/srs';
 import { useTTS } from '../hooks/useTTS';
+import { hasEnvOpenAIApiKey } from '../utils/env';
 
 
 interface SettingsModalProps {
@@ -55,8 +57,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTestError(null);
     setTestSuccess(false);
 
-    if (settings.ttsProvider === 'openai' && !settings.openAIApiKey?.trim()) {
-      setTestError('Please enter an OpenAI API key before testing.');
+    const effectiveKey = (settings.openAIApiKey || (hasEnvOpenAIApiKey() ? 'env' : ''))?.trim();
+    if (settings.ttsProvider === 'openai' && !effectiveKey) {
+      setTestError('Please enter an OpenAI API key or set OPENAI_API_KEY in .env before testing.');
       return;
     }
 
@@ -174,11 +177,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* API Key Input */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      OpenAI API Key
-                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        OpenAI API Key
+                      </label>
+                      {hasEnvOpenAIApiKey() && (
+                        <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-emerald-500/10 text-emerald-500 rounded border border-emerald-500/20">
+                          Loaded from .env
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                      Stored in local browser storage only
+                      {hasEnvOpenAIApiKey() ? '.env active (override below if needed)' : 'Stored in local browser storage'}
                     </span>
                   </div>
 
@@ -187,7 +197,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       type={showApiKey ? 'text' : 'password'}
                       value={settings.openAIApiKey || ''}
                       onChange={(e) => onUpdateSettings({ openAIApiKey: e.target.value })}
-                      placeholder="sk-proj-..."
+                      placeholder={hasEnvOpenAIApiKey() ? '(Using OPENAI_API_KEY from .env)' : 'sk-proj-...'}
                       className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-indigo-500"
                     />
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -334,6 +344,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </p>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Section 1.5: Speech Evaluator */}
+          <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                <Mic className="w-4 h-4" />
+                <span>Speech & Pronunciation Evaluation (OpenAI Whisper + GPT-4o-mini)</span>
+              </h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                0.0 - 10.0 Scoring
+              </span>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                <Zap className="w-4 h-4 text-indigo-500" />
+                <span>Unified OpenAI Architecture</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Uses the configured <strong>OpenAI API Key</strong> for everything: high-fidelity <strong>Whisper-1</strong> speech transcription and <strong>GPT-4o-mini</strong> pronunciation scoring, stress detection, and flashcard card generation.
+              </p>
             </div>
           </div>
 
