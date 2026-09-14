@@ -6,6 +6,7 @@ import {
   Sparkles,
   Mic,
   Search,
+  Download,
 } from 'lucide-react';
 import type { WordDefinition } from '../../types/script';
 import type { UserSettings, SRSCard, Category } from '../../types/srs';
@@ -19,25 +20,33 @@ import { getEnvOpenAIApiKey } from '../../utils/env';
 interface ScriptsViewProps {
   settings: UserSettings;
   onAddCardToSRS: (cardData: Omit<SRSCard, 'id' | 'repetition' | 'interval' | 'easeFactor' | 'dueDate' | 'lastReviewed' | 'createdAt'>) => void;
+  onOpenImportExport?: () => void;
+  scriptsHook?: ReturnType<typeof useScripts>;
 }
 
 export const ScriptsView: React.FC<ScriptsViewProps> = ({
   settings,
   onAddCardToSRS,
+  onOpenImportExport,
+  scriptsHook,
 }) => {
   const effectiveOpenAIKey = (settings.openAIApiKey || getEnvOpenAIApiKey())?.trim();
 
+  const internalScripts = useScripts(effectiveOpenAIKey);
   const {
     scripts,
     activeScript,
     activeScriptId,
+    progressMap,
     isGenerating,
     selectScript,
     deleteScript,
     updateScriptScore,
+    updateScriptProgress,
+    resetScriptProgress,
     generateNewScript,
     restoreSeedScripts,
-  } = useScripts(effectiveOpenAIKey);
+  } = scriptsHook || internalScripts;
 
   const getScoreBadgeClass = (score: number | null | undefined): string => {
     if (score === null || score === undefined) return 'text-slate-400 border-slate-500/30 bg-slate-500/10';
@@ -110,6 +119,17 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
+          {onOpenImportExport && (
+            <button
+              type="button"
+              onClick={onOpenImportExport}
+              className="px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-white text-xs font-semibold border border-white/20 dark:border-slate-700 flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5 text-indigo-300" />
+              <span>Sync / Backup JSON</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setIsGeneratorOpen(true)}
@@ -178,6 +198,12 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
               ) : (
                 filteredScripts.map((s) => {
                   const isActive = s.id === activeScriptId;
+                  const scriptProg = progressMap[s.id];
+                  const practicedCount = scriptProg?.completedLines
+                    ? Object.values(scriptProg.completedLines).filter(Boolean).length
+                    : 0;
+                  const displayScore = scriptProg?.lastScore ?? s.lastScore;
+
                   return (
                     <div
                       key={s.id}
@@ -194,15 +220,15 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
                             {s.category}
                           </span>
                           <span className="text-[10px] text-slate-400">
-                            {s.lines.length} turns
+                            {practicedCount > 0 ? `${practicedCount}/${s.lines.length} practiced` : `${s.lines.length} turns`}
                           </span>
-                          {s.lastScore !== undefined && s.lastScore !== null && (
+                          {displayScore !== undefined && displayScore !== null && (
                             <span
                               className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold font-mono border ${getScoreBadgeClass(
-                                s.lastScore
+                                displayScore
                               )}`}
                             >
-                              {s.lastScore.toFixed(1)} / 10.0
+                              {displayScore.toFixed(1)} / 10.0
                             </span>
                           )}
                         </div>
@@ -245,6 +271,9 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
               key={activeScript.id}
               script={activeScript}
               settings={settings}
+              progress={progressMap[activeScript.id]}
+              onProgressChange={(partial) => updateScriptProgress(activeScript.id, partial)}
+              onResetProgress={() => resetScriptProgress(activeScript.id)}
               onOpenDefinition={(def) => {
                 setActiveDefinition(def);
                 setIsDefModalOpen(true);

@@ -29,6 +29,23 @@ export interface ConversationScript {
   createdAt: string;
 }
 
+export interface TurnEvaluationRecord {
+  turnId: string | number;
+  score: number | null;
+  isEvaluated: boolean;
+  annotations: import('./speech-evaluator').AnnotationItem[];
+}
+
+export interface ScriptProgress {
+  selectedRole?: string;
+  completedLines: Record<string, boolean>;
+  evaluations: Record<string | number, TurnEvaluationRecord>;
+  lastScore?: number;
+  lastPracticedAt?: string;
+}
+
+export type ScriptProgressMap = Record<string, ScriptProgress>;
+
 export interface WordDefinition {
   term: string;
   phonetic?: string;
@@ -46,3 +63,10 @@ export interface GenerateScriptParams {
   difficulty?: 'intermediate' | 'advanced';
   situationDetails?: string;
 }
+
+export interface ScriptImportExportResult {
+  importedCount: number;
+  duplicatesSkipped: number;
+  progressImportedCount: number;
+}
+

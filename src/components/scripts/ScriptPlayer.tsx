@@ -13,7 +13,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import type { ConversationScript, DialogueLine, ScriptCharacter, WordDefinition } from '../../types/script';
+import type { ConversationScript, DialogueLine, ScriptCharacter, WordDefinition, ScriptProgress } from '../../types/script';
 import type { UserSettings, SRSCard } from '../../types/srs';
 import type { TurnEvaluationState } from '../../types/speech-evaluator';
 import { useTTS } from '../../hooks/useTTS';
@@ -25,6 +25,9 @@ import { SpeechAnnotationTooltip } from './SpeechAnnotationTooltip';
 interface ScriptPlayerProps {
   script: ConversationScript;
   settings: UserSettings;
+  progress?: ScriptProgress;
+  onProgressChange?: (partial: Partial<ScriptProgress>) => void;
+  onResetProgress?: () => void;
   onOpenDefinition: (def: WordDefinition) => void;
   onRequestDefinitionLookup: (term: string, contextSentence: string) => Promise<void>;
   onAddCardToSRS?: (cardData: Omit<SRSCard, 'id' | 'repetition' | 'interval' | 'easeFactor' | 'dueDate' | 'lastReviewed' | 'createdAt'>) => void;
@@ -34,6 +37,9 @@ interface ScriptPlayerProps {
 export const ScriptPlayer: React.FC<ScriptPlayerProps> = ({
   script,
   settings,
+  progress,
+  onProgressChange,
+  onResetProgress,
   onRequestDefinitionLookup,
   onAddCardToSRS,
   onScoreUpdate,
@@ -42,16 +48,34 @@ export const ScriptPlayer: React.FC<ScriptPlayerProps> = ({
   const { startRecording, stopRecording, isRecording } = useAudioRecorder();
 
   const [selectedRole, setSelectedRole] = useState<string>(
-    script.userRoleCharacterId || script.characters[0]?.id || ''
+    progress?.selectedRole || script.userRoleCharacterId || script.characters[0]?.id || ''
   );
-  const [completedLines, setCompletedLines] = useState<Record<string, boolean>>({});
+  const [completedLines, setCompletedLines] = useState<Record<string, boolean>>(
+    progress?.completedLines || {}
+  );
   const [selectedText, setSelectedText] = useState<string>('');
   const [selectedContext, setSelectedContext] = useState<string>('');
   const [showLookupButton, setShowLookupButton] = useState(false);
   const [lookupButtonPos, setLookupButtonPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Evaluations state: Record<string | number, TurnEvaluationState>
-  const [evaluations, setEvaluations] = useState<Record<string | number, TurnEvaluationState>>({});
+  const [evaluations, setEvaluations] = useState<Record<string | number, TurnEvaluationState>>(() => {
+    if (!progress?.evaluations) return {};
+    const initial: Record<string | number, TurnEvaluationState> = {};
+    for (const [key, val] of Object.entries(progress.evaluations)) {
+      initial[key] = {
+        turnId: val.turnId,
+        audioBlobUrl: null,
+        score: val.score,
+        isEvaluated: val.isEvaluated,
+        isRecording: false,
+        isLoading: false,
+        annotations: val.annotations || [],
+        error: null,
+      };
+    }
+    return initial;
+  });
   const [activeRecordingLineId, setActiveRecordingLineId] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -129,11 +153,24 @@ export const ScriptPlayer: React.FC<ScriptPlayerProps> = ({
     speak(line.text, `script-line-${line.id}`, actorSettings);
   };
 
+  const handleRoleSelect = (charId: string) => {
+    setSelectedRole(charId);
+    if (onProgressChange) {
+      onProgressChange({ selectedRole: charId });
+    }
+  };
+
   const handleToggleLineDone = (lineId: string) => {
-    setCompletedLines((prev) => ({
-      ...prev,
-      [lineId]: !prev[lineId],
-    }));
+    setCompletedLines((prev) => {
+      const next = {
+        ...prev,
+        [lineId]: !prev[lineId],
+      };
+      if (onProgressChange) {
+        onProgressChange({ completedLines: next });
+      }
+      return next;
+    });
   };
 
   // Required user turns calculation
@@ -241,12 +278,31 @@ export const ScriptPlayer: React.FC<ScriptPlayerProps> = ({
             }
           }
 
+          if (onProgressChange) {
+            onProgressChange({
+              evaluations: {
+                [line.id]: {
+                  turnId: line.id,
+                  score: updatedScore,
+                  isEvaluated: true,
+                  annotations: evaluationResult.annotations || [],
+                },
+              },
+            });
+          }
+
           return next;
         });
 
         // Automatically mark line as completed/practiced if score >= 6.0
         if (updatedScore >= 6.0) {
-          setCompletedLines((prev) => ({ ...prev, [line.id]: true }));
+          setCompletedLines((prev) => {
+            const next = { ...prev, [line.id]: true };
+            if (onProgressChange) {
+              onProgressChange({ completedLines: next });
+            }
+            return next;
+          });
         }
       } catch (err: any) {
         console.error('Speech evaluation failed:', err);
@@ -427,7 +483,7 @@ export const ScriptPlayer: React.FC<ScriptPlayerProps> = ({
                   <button
                     key={char.id}
                     type="button"
-                    onClick={() => setSelectedRole(char.id)}
+                    onClick={() => handleRoleSelect(char.id)}
                     className={`px-3 py-1 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs scale-102'
@@ -442,9 +498,29 @@ export const ScriptPlayer: React.FC<ScriptPlayerProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <Info className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Click the mic on your turns to evaluate pronunciation with AI.</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            {onResetProgress && (completedCount > 0 || completedTurns.length > 0) && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Reset speaking progress and scores for this script?')) {
+                    setCompletedLines({});
+                    setEvaluations({});
+                    onResetProgress();
+                  }
+                }}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                title="Reset progress for this dialogue"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Progress</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <Info className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Click the mic on your turns to evaluate pronunciation with AI.</span>
+            </div>
           </div>
         </div>
       </div>

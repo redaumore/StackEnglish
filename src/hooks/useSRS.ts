@@ -343,19 +343,39 @@ export function useSRS() {
     setReviewLogs([]);
   }, []);
 
-  const exportDeckJSON = useCallback(() => {
-    const exportData = {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      totalCards: cards.length,
-      cards,
-      settings,
-    };
-    return JSON.stringify(exportData, null, 2);
-  }, [cards, settings]);
+  const exportDeckJSON = useCallback(
+    (extraData?: { scripts?: unknown; scriptProgress?: unknown }): string => {
+      const exportData = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        totalCards: cards.length,
+        cards,
+        settings,
+        ...(extraData?.scripts ? { totalScripts: (extraData.scripts as any[]).length, scripts: extraData.scripts } : {}),
+        ...(extraData?.scriptProgress ? { scriptProgress: extraData.scriptProgress } : {}),
+      };
+      return JSON.stringify(exportData, null, 2);
+    },
+    [cards, settings]
+  );
+
 
   const importDeckJSON = useCallback(
-    (jsonString: string, mode: 'merge' | 'replace' = 'merge'): { count: number; duplicatesSkipped: number } => {
+    (
+      jsonString: string,
+      mode: 'merge' | 'replace' = 'merge',
+      onImportScripts?: (
+        rawScripts: unknown,
+        rawProgress?: unknown,
+        mode?: 'merge' | 'replace'
+      ) => { importedCount: number; duplicatesSkipped: number; progressImportedCount: number }
+    ): {
+      count: number;
+      duplicatesSkipped: number;
+      scriptsImported?: number;
+      scriptsSkipped?: number;
+      scriptsProgressImported?: number;
+    } => {
       let parsed: any;
       try {
         parsed = JSON.parse(jsonString);
@@ -364,25 +384,58 @@ export function useSRS() {
       }
 
       let importedCards: SRSCard[] = [];
+      let hasCards = false;
+
       if (Array.isArray(parsed)) {
         importedCards = parsed;
+        hasCards = true;
       } else if (parsed && Array.isArray(parsed.cards)) {
         importedCards = parsed.cards;
-      } else {
-        throw new Error('JSON does not contain a valid cards array.');
+        hasCards = true;
       }
 
-      const validCards: SRSCard[] = importedCards.filter(
-        (c) => c && typeof c.phrase === 'string' && typeof c.category === 'string' && typeof c.meaning_en === 'string'
-      );
+      let scriptsResult: { importedCount: number; duplicatesSkipped: number; progressImportedCount: number } | undefined;
+      if (onImportScripts && parsed && !Array.isArray(parsed) && Array.isArray(parsed.scripts)) {
+        scriptsResult = onImportScripts(parsed.scripts, parsed.scriptProgress, mode);
+      }
+
+      // If user supplied a file with scripts only or cards only or both
+      if (!hasCards && !scriptsResult) {
+        throw new Error('JSON does not contain a valid cards or speaking scripts array.');
+      }
+
+      let validCards: SRSCard[] = [];
+      if (hasCards) {
+        validCards = importedCards.filter(
+          (c) => c && typeof c.phrase === 'string' && typeof c.category === 'string' && typeof c.meaning_en === 'string'
+        );
+      }
+
+      if (validCards.length === 0 && (!scriptsResult || scriptsResult.importedCount === 0)) {
+        if (!scriptsResult || (scriptsResult.importedCount === 0 && scriptsResult.duplicatesSkipped === 0)) {
+          throw new Error('No valid cards or speaking scripts found in imported data.');
+        }
+      }
 
       if (validCards.length === 0) {
-        throw new Error('No valid card items found in imported data.');
+        return {
+          count: 0,
+          duplicatesSkipped: 0,
+          scriptsImported: scriptsResult?.importedCount || 0,
+          scriptsSkipped: scriptsResult?.duplicatesSkipped || 0,
+          scriptsProgressImported: scriptsResult?.progressImportedCount || 0,
+        };
       }
 
       if (mode === 'replace') {
         setCards(validCards);
-        return { count: validCards.length, duplicatesSkipped: 0 };
+        return {
+          count: validCards.length,
+          duplicatesSkipped: 0,
+          scriptsImported: scriptsResult?.importedCount || 0,
+          scriptsSkipped: scriptsResult?.duplicatesSkipped || 0,
+          scriptsProgressImported: scriptsResult?.progressImportedCount || 0,
+        };
       }
 
       let duplicatesSkipped = 0;
@@ -414,7 +467,13 @@ export function useSRS() {
       }
 
       setCards((prev) => [...prev, ...toAdd]);
-      return { count: toAdd.length, duplicatesSkipped };
+      return {
+        count: toAdd.length,
+        duplicatesSkipped,
+        scriptsImported: scriptsResult?.importedCount || 0,
+        scriptsSkipped: scriptsResult?.duplicatesSkipped || 0,
+        scriptsProgressImported: scriptsResult?.progressImportedCount || 0,
+      };
     },
     [cards]
   );

@@ -9,6 +9,8 @@ import { ImportExportModal } from './components/ImportExportModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ScriptsView } from './components/scripts/ScriptsView';
 import { useSRS } from './hooks/useSRS';
+import { useScripts } from './hooks/useScripts';
+import { getEnvOpenAIApiKey } from './utils/env';
 import type { Category, SRSCard } from './types/srs';
 
 export function App() {
@@ -28,6 +30,9 @@ export function App() {
     importDeckJSON,
     updateSettings,
   } = useSRS();
+
+  const effectiveOpenAIKey = (settings.openAIApiKey || getEnvOpenAIApiKey())?.trim();
+  const scriptsHook = useScripts(effectiveOpenAIKey);
 
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [studyCategory, setStudyCategory] = useState<Category | 'All'>('All');
@@ -160,6 +165,8 @@ export function App() {
           <ScriptsView
             settings={settings}
             onAddCardToSRS={addCard}
+            onOpenImportExport={() => setIsImportExportOpen(true)}
+            scriptsHook={scriptsHook}
           />
         )}
       </main>
@@ -195,9 +202,17 @@ export function App() {
       <ImportExportModal
         isOpen={isImportExportOpen}
         onClose={() => setIsImportExportOpen(false)}
-        onExportJSON={exportDeckJSON}
-        onImportJSON={importDeckJSON}
+        onExportJSON={() =>
+          exportDeckJSON({
+            scripts: scriptsHook.scripts,
+            scriptProgress: scriptsHook.progressMap,
+          })
+        }
+        onImportJSON={(jsonStr, mode) =>
+          importDeckJSON(jsonStr, mode, scriptsHook.importScriptsData)
+        }
         totalCardsCount={cards.length}
+        totalScriptsCount={scriptsHook.scripts.length}
       />
 
       <SettingsModal

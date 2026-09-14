@@ -8,12 +8,21 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
+interface ImportExportResult {
+  count: number;
+  duplicatesSkipped: number;
+  scriptsImported?: number;
+  scriptsSkipped?: number;
+  scriptsProgressImported?: number;
+}
+
 interface ImportExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onExportJSON: () => string;
-  onImportJSON: (jsonStr: string, mode: 'merge' | 'replace') => { count: number; duplicatesSkipped: number };
+  onImportJSON: (jsonStr: string, mode: 'merge' | 'replace') => ImportExportResult;
   totalCardsCount: number;
+  totalScriptsCount?: number;
 }
 
 export const ImportExportModal: React.FC<ImportExportModalProps> = ({
@@ -22,6 +31,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   onExportJSON,
   onImportJSON,
   totalCardsCount,
+  totalScriptsCount = 0,
 }) => {
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
   const [copied, setCopied] = useState<boolean>(false);
@@ -75,9 +85,24 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
     try {
       const res = onImportJSON(importText, importMode);
+      const messages: string[] = [];
+
+      if (res.count > 0 || res.duplicatesSkipped > 0) {
+        messages.push(`${res.count} flashcard${res.count === 1 ? '' : 's'} (${res.duplicatesSkipped} duplicates skipped)`);
+      }
+
+      if (
+        (res.scriptsImported !== undefined && res.scriptsImported > 0) ||
+        (res.scriptsSkipped !== undefined && res.scriptsSkipped > 0)
+      ) {
+        messages.push(`${res.scriptsImported || 0} speaking script${(res.scriptsImported || 0) === 1 ? '' : 's'} (${res.scriptsSkipped || 0} duplicates skipped)`);
+      }
+
+      const summaryText = messages.length > 0 ? messages.join(' and ') : `${res.count} items`;
+
       setImportResult({
         success: true,
-        message: `Successfully imported ${res.count} cards (${res.duplicatesSkipped} duplicates skipped).`,
+        message: `Successfully imported ${summaryText}.`,
       });
       setImportText('');
     } catch (err: any) {
@@ -105,7 +130,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                 Data Backup & Sync (JSON)
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                100% offline portable flashcard deck persistence.
+                100% offline portable backup for cards & speaking scripts.
               </p>
             </div>
           </div>
@@ -151,15 +176,26 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         <div className="p-6 overflow-y-auto space-y-5">
           {activeTab === 'export' ? (
             <div className="space-y-4 text-center sm:text-left">
-              <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2">
+              <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
                 <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Deck Summary
+                  Backup Summary
                 </div>
-                <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                  {totalCardsCount} Phrases & Cards
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800/80">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Flashcards</div>
+                    <div className="text-xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      {totalCardsCount}
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800/80">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Speaking Scripts</div>
+                    <div className="text-xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      {totalScriptsCount}
+                    </div>
+                  </div>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Includes all phrases, definitions, example meeting sentences, SM-2 repetitions, ease factors, and scheduled due dates.
+                  Includes all phrases, definitions, example meeting sentences, SM-2 repetitions, dialogue scripts, lines, and speaking evaluations.
                 </p>
               </div>
 
@@ -219,7 +255,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                   >
                     <div>Merge & Skip Duplicates</div>
                     <div className="text-[10px] font-normal opacity-80 mt-0.5">
-                      Safely appends only new phrases
+                      Safely appends new cards & scripts
                     </div>
                   </button>
 
@@ -232,9 +268,9 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                         : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <div>Replace Entire Deck</div>
+                    <div>Replace Entire Library</div>
                     <div className="text-[10px] font-normal opacity-80 mt-0.5">
-                      Overwrites current deck
+                      Overwrites current cards & scripts
                     </div>
                   </button>
                 </div>
@@ -262,7 +298,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
                   rows={4}
                   value={importText}
                   onChange={(e) => setImportText(e.target.value)}
-                  placeholder="Paste exported JSON array here..."
+                  placeholder="Paste exported JSON (cards and/or scripts) here..."
                   className="w-full font-mono text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
