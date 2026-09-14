@@ -1,7 +1,7 @@
-# Anki4Devs 🚀
+# StackEnglish 🚀
 > **Spaced Repetition System (SRS) for Professional English in Software Engineering**
 
-**Anki4Devs** is a production-ready, client-side Spaced Repetition Single Page Application built specifically for software engineers, tech leads, and engineering managers to master high-impact idiomatic expressions across 5 core meeting scenarios:
+**StackEnglish** is a production-ready, client-side Spaced Repetition Single Page Application built specifically for software engineers, tech leads, and engineering managers to master high-impact idiomatic expressions across 5 core meeting scenarios:
 1. **Kick-offs & Inceptions**
 2. **Daily Standups & Follow-ups**
 3. **Scope Negotiation & Pushback**

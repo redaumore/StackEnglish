@@ -172,10 +172,10 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 py-6 px-4 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-950/50">
+      <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 py-6 px-4 mb-16 md:mb-0 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-950/50">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Anki4Devs</span> — Spaced Repetition System for Software Engineering Communication
+            <span className="font-semibold text-slate-700 dark:text-slate-300">StackEnglish</span> — Spaced Repetition System for Software Engineering Communication
           </div>
           <div className="flex items-center gap-4 text-[11px]">
             <span>SuperMemo SM-2</span>
