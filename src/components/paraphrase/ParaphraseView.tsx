@@ -13,6 +13,7 @@ import {
   Zap,
   CheckCircle2,
   RefreshCw,
+  BarChart3,
 } from 'lucide-react';
 import type { TechCard, EvaluationResult } from '../../types/techCard';
 import type { UserSettings, SRSCard } from '../../types/srs';
@@ -21,11 +22,13 @@ import { OpenAITTSService } from '../../services/OpenAITTSService';
 import { SpeechService } from '../../services/SpeechService';
 import { convertBlobToWav } from '../../utils/audioConversion';
 import { getEnvOpenAIApiKey } from '../../utils/env';
+import { ParaphraseAnalyticsDashboard } from './ParaphraseAnalyticsDashboard';
 
 interface ParaphraseViewProps {
   settings: UserSettings;
   techCards: TechCard[];
   dueCards: TechCard[];
+  history?: EvaluationResult[];
   onRecordEvaluation: (cardId: string, result: EvaluationResult) => void;
   onImportFlashcards?: (flashcards: SRSCard[]) => void;
   flashcards?: SRSCard[];
@@ -34,16 +37,20 @@ interface ParaphraseViewProps {
 }
 
 type PracticeState = 'IDLE' | 'RECORDING' | 'PROCESSING' | 'FEEDBACK';
+type ViewMode = 'practice' | 'analytics';
 
 export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
   settings,
   techCards,
   dueCards,
+  history = [],
   onRecordEvaluation,
   onImportFlashcards,
   flashcards = [],
+  onResetCard,
   onRestoreSeedCards,
 }) => {
+  const [activeView, setActiveView] = useState<ViewMode>('practice');
   const effectiveApiKey = (settings.openAIApiKey || getEnvOpenAIApiKey())?.trim();
 
   // Current queue of cards to review: due cards prioritized, or fallback to all tech cards
@@ -420,11 +427,41 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
           </div>
         </div>
 
-        {/* Progress & Batch Actions */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
-            Tarjeta {currentIndex + 1} de {sessionCards.length}
-          </span>
+        {/* Sub-tab switcher & Batch Actions */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setActiveView('practice')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeView === 'practice'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              <span>Practice ({dueCards.length > 0 ? `${dueCards.length} due` : `${techCards.length}`})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('analytics')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeView === 'analytics'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Metrics & Radar</span>
+            </button>
+          </div>
+
+          {activeView === 'practice' && (
+            <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
+              Tarjeta {currentIndex + 1} de {sessionCards.length}
+            </span>
+          )}
+
           {onImportFlashcards && flashcards.length > 0 && (
             <button
               onClick={() => onImportFlashcards(flashcards)}
@@ -436,6 +473,17 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
           )}
         </div>
       </div>
+
+      {activeView === 'analytics' ? (
+        <ParaphraseAnalyticsDashboard
+          techCards={techCards}
+          dueCards={dueCards}
+          history={history}
+          onStartPractice={() => setActiveView('practice')}
+          onResetCard={onResetCard}
+        />
+      ) : (
+        <>
 
       {errorMessage && (
         <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
@@ -700,6 +748,8 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

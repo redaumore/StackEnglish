@@ -187,6 +187,7 @@ export function App() {
             settings={settings}
             techCards={paraphraseHook.techCards}
             dueCards={paraphraseHook.dueCards}
+            history={paraphraseHook.history}
             onRecordEvaluation={paraphraseHook.recordEvaluation}
             onImportFlashcards={paraphraseHook.importFlashcards}
             flashcards={cards}
