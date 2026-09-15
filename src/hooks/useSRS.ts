@@ -231,7 +231,35 @@ export function useSRS() {
 
       const dueCards = pool.filter((c) => isCardDue(c, now));
       const unstudiedCards = pool.filter((c) => isCardNew(c));
-      const newBatch = unstudiedCards.slice(0, settings.newCardsPerDay);
+
+      // Group unstudied cards by category to interleave across available topics
+      const cardsByCategory = new Map<string, SRSCard[]>();
+      unstudiedCards.forEach((card) => {
+        const catList = cardsByCategory.get(card.category);
+        if (catList) {
+          catList.push(card);
+        } else {
+          cardsByCategory.set(card.category, [card]);
+        }
+      });
+
+      const interleavedNewCards: SRSCard[] = [];
+      const queues = Array.from(cardsByCategory.values());
+      let hasMore = true;
+      let round = 0;
+
+      while (hasMore) {
+        hasMore = false;
+        for (const queue of queues) {
+          if (round < queue.length) {
+            interleavedNewCards.push(queue[round]);
+            hasMore = true;
+          }
+        }
+        round++;
+      }
+
+      const newBatch = interleavedNewCards.slice(0, settings.newCardsPerDay);
 
       return [...dueCards, ...newBatch];
     },
