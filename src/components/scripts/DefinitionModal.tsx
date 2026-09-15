@@ -131,7 +131,7 @@ export const DefinitionModal: React.FC<DefinitionModalProps> = ({
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Customize Anki Flashcard</span>
+                  <span>Customize Flashcard</span>
                 </div>
 
                 <div className="space-y-1">

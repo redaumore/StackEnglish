@@ -5,6 +5,12 @@ import { calculateSM2, isCardDue, isCardMastered, isCardNew } from '../utils/sm2
 import { getEnvOpenAIApiKey, getEnvGeminiApiKey } from '../utils/env';
 
 const STORAGE_KEYS = {
+  CARDS: 'stackenglish_cards_v1',
+  SETTINGS: 'stackenglish_settings_v1',
+  REVIEWS: 'stackenglish_reviews_v1',
+};
+
+const LEGACY_STORAGE_KEYS = {
   CARDS: 'anki4devs_cards_v1',
   SETTINGS: 'anki4devs_settings_v1',
   REVIEWS: 'anki4devs_reviews_v1',
@@ -77,7 +83,7 @@ function calculateStreak(logs: ReviewLog[]): number {
 export function useSRS() {
   const [cards, setCards] = useState<SRSCard[]>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.CARDS);
+      const stored = localStorage.getItem(STORAGE_KEYS.CARDS) || localStorage.getItem(LEGACY_STORAGE_KEYS.CARDS);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -95,7 +101,7 @@ export function useSRS() {
     const envGemini = getEnvGeminiApiKey();
 
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+      const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS) || localStorage.getItem(LEGACY_STORAGE_KEYS.SETTINGS);
       if (stored) {
         const parsed = JSON.parse(stored);
         const resolvedOpenAI = parsed.openAIApiKey?.trim() ? parsed.openAIApiKey : envOpenAI;
@@ -122,7 +128,7 @@ export function useSRS() {
 
   const [reviewLogs, setReviewLogs] = useState<ReviewLog[]>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+      const stored = localStorage.getItem(STORAGE_KEYS.REVIEWS) || localStorage.getItem(LEGACY_STORAGE_KEYS.REVIEWS);
       if (stored) {
         return JSON.parse(stored);
       }

@@ -114,7 +114,7 @@ export const ScriptsView: React.FC<ScriptsViewProps> = ({
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
-            Simulate realistic developer, architect and lead dialogues. Practice speaking aloud, listen to AI voice tracks, select unknown idioms to get definitions, and save them straight to your Anki deck.
+            Simulate realistic developer, architect and lead dialogues. Practice speaking aloud, listen to AI voice tracks, select unknown idioms to get definitions, and save them straight to your StackEnglish deck.
           </p>
         </div>
 

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import type { NavTab } from './components/Header';
 import { Dashboard } from './components/Dashboard';
-import { StudySession } from './components/StudySession';
 import { CardList } from './components/CardList';
 import { CardModal } from './components/CardModal';
 import { ImportExportModal } from './components/ImportExportModal';
@@ -20,7 +19,6 @@ export function App() {
     cards,
     settings,
     stats,
-    getSessionCards,
     gradeCard,
     addCard,
     updateCard,
@@ -39,7 +37,7 @@ export function App() {
 
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [studyCategory, setStudyCategory] = useState<Category | 'All'>('All');
-  const [studySessionBatch, setStudySessionBatch] = useState<SRSCard[]>([]);
+  const [cardListViewMode, setCardListViewMode] = useState<'execution' | 'analytics'>('execution');
 
   // Modals
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
@@ -63,12 +61,10 @@ export function App() {
 
   // Launch study session
   const handleStartStudy = (
-    category: Category | 'All' = 'All',
-    mode: 'standard' | 'reviewed_only' | 'all' = 'standard'
+    category: Category | 'All' = 'All'
   ) => {
     setStudyCategory(category);
-    const batch = getSessionCards(category, mode);
-    setStudySessionBatch(batch);
+    setCardListViewMode('execution');
     setCurrentTab('study');
   };
 
@@ -126,7 +122,10 @@ export function App() {
               setEditingCard(null);
               setIsCardModalOpen(true);
             }}
-            onOpenCardList={() => setCurrentTab('cards')}
+            onOpenCardList={(view = 'execution') => {
+              setCardListViewMode(view);
+              setCurrentTab('cards');
+            }}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenScripts={() => setCurrentTab('scripts')}
             onOpenParaphrase={() => setCurrentTab('paraphrase')}
@@ -138,27 +137,18 @@ export function App() {
           />
         )}
 
-        {currentTab === 'study' && (
-          <StudySession
-            key={`session-${studyCategory}-${studySessionBatch.length}`}
-            sessionCards={studySessionBatch}
-            settings={settings}
-            selectedCategory={studyCategory}
-            onGradeCard={gradeCard}
-            onFinishSession={() => {
-              // Refresh batch
-              setStudySessionBatch(getSessionCards(studyCategory));
-            }}
-            onExitToDashboard={() => setCurrentTab('dashboard')}
-          />
-        )}
-
-        {currentTab === 'cards' && (
+        {(currentTab === 'study' || currentTab === 'cards') && (
           <CardList
             cards={cards}
             stats={stats}
             settings={settings}
-            onStartStudy={handleStartStudy}
+            initialView={currentTab === 'study' ? 'execution' : cardListViewMode}
+            initialCategory={studyCategory}
+            onViewChange={(view) => {
+              setCardListViewMode(view);
+              setCurrentTab(view === 'execution' ? 'study' : 'cards');
+            }}
+            onGradeCard={gradeCard}
             onOpenAddModal={() => {
               setEditingCard(null);
               setIsCardModalOpen(true);

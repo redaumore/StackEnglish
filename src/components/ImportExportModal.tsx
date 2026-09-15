@@ -48,7 +48,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
     const a = document.createElement('a');
     a.href = url;
     const dateStr = new Date().toISOString().split('T')[0];
-    a.download = `anki4devs_backup_${dateStr}.json`;
+    a.download = `stackenglish_backup_${dateStr}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

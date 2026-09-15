@@ -181,7 +181,7 @@ export const SpeechAnnotationTooltip: React.FC<SpeechAnnotationTooltipProps> = (
             </p>
           </div>
 
-          {/* Quick Action: Add to Anki */}
+          {/* Quick Action: Add to Deck */}
           {onAddToDeck && (
             <div className="pt-2 border-t border-slate-800 flex justify-end">
               <button
@@ -196,13 +196,13 @@ export const SpeechAnnotationTooltip: React.FC<SpeechAnnotationTooltipProps> = (
                 {isAdded ? (
                   <>
                     <Check className="w-3 h-3 text-emerald-200" />
-                    <span>Added to Anki</span>
+                    <span>Added to Deck</span>
                   </>
                 ) : (
                   <>
                     <Plus className="w-3 h-3" />
                     <Sparkles className="w-3 h-3 text-indigo-200" />
-                    <span>Add to Anki</span>
+                    <span>Add to Deck</span>
                   </>
                 )}
               </button>

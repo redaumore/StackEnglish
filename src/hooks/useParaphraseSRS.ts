@@ -4,6 +4,11 @@ import type { SRSCard } from '../types/srs';
 import { SEED_TECH_CARDS, convertFlashcardToTechCard } from '../data/seedTechCards';
 
 const STORAGE_KEYS = {
+  TECH_CARDS: 'stackenglish_tech_paraphrase_cards_v1',
+  HISTORY: 'stackenglish_tech_paraphrase_history_v1',
+};
+
+const LEGACY_STORAGE_KEYS = {
   TECH_CARDS: 'anki4devs_tech_paraphrase_cards_v1',
   HISTORY: 'anki4devs_tech_paraphrase_history_v1',
 };
@@ -11,7 +16,7 @@ const STORAGE_KEYS = {
 export function useParaphraseSRS() {
   const [techCards, setTechCards] = useState<TechCard[]>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.TECH_CARDS);
+      const stored = localStorage.getItem(STORAGE_KEYS.TECH_CARDS) || localStorage.getItem(LEGACY_STORAGE_KEYS.TECH_CARDS);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -26,7 +31,7 @@ export function useParaphraseSRS() {
 
   const [history, setHistory] = useState<EvaluationResult[]>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.HISTORY);
+      const stored = localStorage.getItem(STORAGE_KEYS.HISTORY) || localStorage.getItem(LEGACY_STORAGE_KEYS.HISTORY);
       if (stored) {
         return JSON.parse(stored);
       }

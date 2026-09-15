@@ -196,7 +196,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
       silenceTimeoutRef.current = window.setTimeout(checkSilence, 1000);
     } catch (err) {
       console.error('Failed to start microphone:', err);
-      setErrorMessage('No se pudo acceder al micrófono. Verificá los permisos de tu navegador.');
+      setErrorMessage('Could not access microphone. Please check your browser permissions.');
       setState('IDLE');
     }
   }, [elapsedSeconds, state]);
@@ -247,7 +247,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
       setState('FEEDBACK');
     } catch (err: any) {
       console.error('Evaluation failed:', err);
-      setErrorMessage(err?.message || 'Error al procesar la evaluación.');
+      setErrorMessage(err?.message || 'Error processing evaluation.');
       setState('IDLE');
     }
   };
@@ -377,10 +377,10 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
           <CheckCircle2 className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          ¡Completaste todas las tarjetas pendientes!
+          All due cards completed!
         </h2>
         <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto text-sm">
-          Has repasado todo tu mazo oral de hoy. Puedes importar tarjetas adicionales desde tus flashcards o reiniciar el mazo semilla.
+          You reviewed your entire oral deck for today. You can import additional cards from your flashcards or restore seed cards.
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
           {onImportFlashcards && flashcards.length > 0 && (
@@ -388,7 +388,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
               onClick={() => onImportFlashcards(flashcards)}
               className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all shadow-md shadow-indigo-600/20"
             >
-              Importar {flashcards.length} Frases de Flashcards
+              Import {flashcards.length} Flashcard Phrases
             </button>
           )}
           {onRestoreSeedCards && (
@@ -396,7 +396,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
               onClick={onRestoreSeedCards}
               className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium transition-all"
             >
-              Restaurar Mazo Base (Seed Cards)
+              Restore Seed Cards
             </button>
           )}
         </div>
@@ -422,7 +422,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Explica el concepto técnico con tus propias palabras evitando los términos prohibidos.
+              Explain the technical concept in your own words, avoiding forbidden terms.
             </p>
           </div>
         </div>
@@ -458,14 +458,14 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
 
           {activeView === 'practice' && (
             <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
-              Tarjeta {currentIndex + 1} de {sessionCards.length}
+              Card {currentIndex + 1} of {sessionCards.length}
             </span>
           )}
 
           {onImportFlashcards && flashcards.length > 0 && (
             <button
               onClick={() => onImportFlashcards(flashcards)}
-              title="Importar frases de las flashcards existentes a tarjetas orales"
+              title="Import phrases from existing flashcards to oral cards"
               className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
@@ -501,7 +501,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
               {currentCard.contextDomain}
             </span>
             <span className="text-xs text-slate-400">
-              • Repaso #{currentCard.repetition} (Intervalo: {currentCard.intervalDays}d)
+              • Review #{currentCard.repetition} (Interval: {currentCard.intervalDays}d)
             </span>
           </div>
 
@@ -515,7 +515,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
           {/* Source Phrase (H2) */}
           <div className="space-y-1 text-center sm:text-left">
             <span className="text-xs uppercase font-semibold tracking-wider text-slate-400">
-              Consigna a explicar:
+              Prompt to explain:
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
               {currentCard.sourcePhrase}
@@ -526,7 +526,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
               <Ban className="w-3.5 h-3.5" />
-              <span>Forbidden Words (No digas estas palabras ni sus raíces):</span>
+              <span>Forbidden Words (Do not say these words or their roots):</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {currentCard.forbiddenWords.map((word) => (
@@ -547,11 +547,11 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
               <button
                 onClick={startRecording}
                 className="group relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                title="Comenzar a grabar tu respuesta en inglés"
+                title="Start recording your answer in English"
               >
                 <Mic className="w-8 h-8 transition-transform group-hover:scale-110" />
                 <span className="absolute -bottom-7 text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  Click para Grabar
+                  Click to Record
                 </span>
               </button>
             </div>
@@ -567,7 +567,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                 <button
                   onClick={stopRecording}
                   className="relative z-10 flex items-center justify-center w-18 h-18 rounded-full bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                  title="Detener alocución"
+                  title="Stop recording"
                 >
                   <Square className="w-7 h-7 fill-white" />
                 </button>
@@ -579,7 +579,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
               </div>
 
               <p className="text-xs text-slate-500 text-center max-w-xs">
-                Habla en inglés explicando la idea. Se detendrá tras 3.5s de silencio o presiona el botón rojo.
+                Speak in English explaining the idea. It will stop after 3.5s of silence or press the red button.
               </p>
             </div>
           )}
@@ -589,10 +589,10 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
               <div className="w-12 h-12 rounded-full border-3 border-indigo-600 border-t-transparent animate-spin" />
               <div className="text-center space-y-1">
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  Evaluando tu parafraseo técnico...
+                  Evaluating your technical paraphrase...
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Transcribiendo audio y consultando al evaluador pedagógico LLM.
+                  Transcribing audio and consulting the LLM evaluator.
                 </p>
               </div>
             </div>
@@ -621,7 +621,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                 <div className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-indigo-500" />
                   <span>
-                    Ritmo: {evaluationResult.telemetry.durationSeconds}s ({evaluationResult.telemetry.paceCategory})
+                    Pace: {evaluationResult.telemetry.durationSeconds}s ({evaluationResult.telemetry.paceCategory})
                   </span>
                 </div>
 
@@ -629,10 +629,10 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                 <div className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold flex items-center gap-1.5">
                   <Zap className="w-3.5 h-3.5 text-indigo-500" />
                   <span>
-                    Próximo repaso:{' '}
+                    Next review:{' '}
                     {evaluationResult.srsUpdate.newIntervalDays === 0
-                      ? 'En 10 minutos (Again)'
-                      : `En ${evaluationResult.srsUpdate.newIntervalDays} días (${evaluationResult.srsUpdate.rating.toUpperCase()})`}
+                      ? 'In 10 minutes (Again)'
+                      : `In ${evaluationResult.srsUpdate.newIntervalDays} days (${evaluationResult.srsUpdate.rating.toUpperCase()})`}
                   </span>
                 </div>
               </div>
@@ -643,7 +643,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                     <span>You said:</span>
                     {evaluationResult.insights.repeatedForbiddenWords.length > 0 && (
-                      <span className="text-rose-500 text-[10px] font-bold">Palabras prohibidas detectadas</span>
+                      <span className="text-rose-500 text-[10px] font-bold">Forbidden words detected</span>
                     )}
                   </div>
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
@@ -656,7 +656,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
 
                 <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-800/60 space-y-1.5">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Model answer (Referencia):
+                    Model answer (Reference):
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 italic leading-relaxed">
                     "{currentCard.modelAnswer}"
@@ -669,7 +669,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                   <p>
-                    <strong className="text-slate-800 dark:text-slate-200">Significado:</strong>{' '}
+                    <strong className="text-slate-800 dark:text-slate-200">Meaning:</strong>{' '}
                     <span className="text-slate-600 dark:text-slate-400">
                       {evaluationResult.insights.meaningSummary}
                     </span>
@@ -679,11 +679,11 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                 <div className="flex items-start gap-2">
                   <Ban className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                   <p>
-                    <strong className="text-slate-800 dark:text-slate-200">Vocabulario:</strong>{' '}
+                    <strong className="text-slate-800 dark:text-slate-200">Vocabulary:</strong>{' '}
                     <span className="text-slate-600 dark:text-slate-400">
                       {evaluationResult.insights.repeatedForbiddenWords.length === 0
-                        ? 'Excelente, no repetiste ningún término prohibido.'
-                        : `Violaste la regla con: ${evaluationResult.insights.repeatedForbiddenWords.join(', ')}.`}
+                        ? 'Great job, no forbidden words used.'
+                        : `Forbidden words used: ${evaluationResult.insights.repeatedForbiddenWords.join(', ')}.`}
                     </span>
                   </p>
                 </div>
@@ -692,7 +692,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                   <div className="flex items-start gap-2">
                     <Sparkles className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-slate-800 dark:text-slate-200">Gramática & Sintaxis:</strong>
+                      <strong className="text-slate-800 dark:text-slate-200">Grammar & Syntax:</strong>
                       <ul className="list-disc list-inside mt-0.5 text-slate-600 dark:text-slate-400 space-y-0.5">
                         {evaluationResult.insights.grammarBullets.map((bullet, i) => (
                           <li key={i}>{bullet}</li>
@@ -719,7 +719,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                   className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold shadow-xs transition-all shrink-0 cursor-pointer"
                 >
                   <Volume2 className="w-4 h-4" />
-                  <span>Escuchar corrección</span>
+                  <span>Listen to correction</span>
                 </button>
               </div>
 
@@ -733,14 +733,14 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                   className="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  <span>Reintentar tarjeta</span>
+                  <span>Retry card</span>
                 </button>
 
                 <button
                   onClick={handleNextExercise}
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-bold shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
                 >
-                  <span>Siguiente ejercicio</span>
+                  <span>Next exercise</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

@@ -3,7 +3,7 @@
  * Enables zero-cost, instant offline playback after initial generation.
  */
 
-const DB_NAME = 'anki4devs_audio_v1';
+const DB_NAME = 'stackenglish_audio_v1';
 const STORE_NAME = 'audio_blobs';
 const DB_VERSION = 1;
 

@@ -181,7 +181,7 @@ export class ParaphraseEvaluationService {
         insights: {
           meaningSummary:
             parsed.insights?.meaningSummary ||
-            'Explicaste con éxito la intención técnica principal de la consigna.',
+            'You successfully explained the main technical intent of the prompt.',
           repeatedForbiddenWords: Array.isArray(parsed.insights?.repeatedForbiddenWords)
             ? parsed.insights.repeatedForbiddenWords
             : [],
@@ -252,13 +252,13 @@ export class ParaphraseEvaluationService {
       insights: {
         meaningSummary:
           repeated.length === 0
-            ? 'Lograste transmitir el concepto técnico sin utilizar los términos prohibidos.'
-            : `Detectamos términos restringidos: ${repeated.join(', ')}. Intenta usar sinónimos la próxima vez.`,
+            ? 'You conveyed the technical concept without using forbidden terms.'
+            : `Restricted terms detected: ${repeated.join(', ')}. Try using descriptive synonyms next time.`,
         repeatedForbiddenWords: repeated,
         grammarBullets:
           repeated.length === 0
-            ? ["Buen ritmo y selección de vocabulario funcional."]
-            : [`Evitá las palabras restringidas (${repeated.join(', ')}) usando descripciones funcionales.`],
+            ? ['Good pace and functional vocabulary selection.']
+            : [`Avoid restricted words (${repeated.join(', ')}) by using descriptive phrasing.`],
         polishedSentence:
           req.userTranscript.length > 5
             ? req.userTranscript

@@ -27,7 +27,7 @@
   - Client-side audio recording (`useAudioRecorder`) across Chromium, Firefox, and Safari via `MediaRecorder`.
   - Multimodal AI speech evaluation calibrated on a `0.0 - 10.0` scale evaluating stress, rhythm, and intelligibility against target dialogue lines.
   - Inline phonetic highlighting and tooltips for phoneme, word stress, omitted sounds, and added sounds (`SpeechAnnotationTooltip`).
-  - One-click "Add to Anki" button directly from pronunciation feedback tooltips.
+  - One-click "Add to Deck" button directly from pronunciation feedback tooltips.
   - Strict dialogue completion threshold: dialogues require an average score $\ge 7.0$ to pass; sessions under 7.0 prompt targeted retries.
 - **Embedded 110-Phrase Starter Deck**: Meticulously curated with authentic engineering vocabulary (e.g. *thundering herd with jitter*, *blast radius mitigation*, *de-scoping non-critical features*).
 - **Deck Library & CRUD**: Instant search, filter by meeting context and status, create custom phrases, edit, and delete.

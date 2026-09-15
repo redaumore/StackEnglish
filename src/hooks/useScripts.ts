@@ -4,6 +4,12 @@ import { SEED_SCRIPTS } from '../data/seedScripts';
 import { ScriptGeneratorService } from '../services/ScriptGeneratorService';
 
 const STORAGE_KEYS = {
+  SCRIPTS: 'stackenglish_scripts_v1',
+  ACTIVE_SCRIPT: 'stackenglish_active_script_v1',
+  PROGRESS: 'stackenglish_script_progress_v1',
+};
+
+const LEGACY_STORAGE_KEYS = {
   SCRIPTS: 'anki4devs_scripts_v1',
   ACTIVE_SCRIPT: 'anki4devs_active_script_v1',
   PROGRESS: 'anki4devs_script_progress_v1',
@@ -12,7 +18,7 @@ const STORAGE_KEYS = {
 export function useScripts(openAIApiKey?: string) {
   const [scripts, setScripts] = useState<ConversationScript[]>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.SCRIPTS);
+      const stored = localStorage.getItem(STORAGE_KEYS.SCRIPTS) || localStorage.getItem(LEGACY_STORAGE_KEYS.SCRIPTS);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -27,7 +33,7 @@ export function useScripts(openAIApiKey?: string) {
 
   const [activeScriptId, setActiveScriptId] = useState<string>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.ACTIVE_SCRIPT);
+      const stored = localStorage.getItem(STORAGE_KEYS.ACTIVE_SCRIPT) || localStorage.getItem(LEGACY_STORAGE_KEYS.ACTIVE_SCRIPT);
       if (stored && scripts.some((s) => s.id === stored)) {
         return stored;
       }
@@ -39,7 +45,7 @@ export function useScripts(openAIApiKey?: string) {
 
   const [progressMap, setProgressMap] = useState<ScriptProgressMap>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.PROGRESS);
+      const stored = localStorage.getItem(STORAGE_KEYS.PROGRESS) || localStorage.getItem(LEGACY_STORAGE_KEYS.PROGRESS);
       if (stored) {
         return JSON.parse(stored);
       }
