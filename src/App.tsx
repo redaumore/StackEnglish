@@ -156,7 +156,9 @@ export function App() {
         {currentTab === 'cards' && (
           <CardList
             cards={cards}
+            stats={stats}
             settings={settings}
+            onStartStudy={handleStartStudy}
             onOpenAddModal={() => {
               setEditingCard(null);
               setIsCardModalOpen(true);
