@@ -8,8 +8,10 @@ import { CardModal } from './components/CardModal';
 import { ImportExportModal } from './components/ImportExportModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ScriptsView } from './components/scripts/ScriptsView';
+import { ParaphraseView } from './components/paraphrase/ParaphraseView';
 import { useSRS } from './hooks/useSRS';
 import { useScripts } from './hooks/useScripts';
+import { useParaphraseSRS } from './hooks/useParaphraseSRS';
 import { getEnvOpenAIApiKey } from './utils/env';
 import type { Category, SRSCard } from './types/srs';
 
@@ -33,6 +35,7 @@ export function App() {
 
   const effectiveOpenAIKey = (settings.openAIApiKey || getEnvOpenAIApiKey())?.trim();
   const scriptsHook = useScripts(effectiveOpenAIKey);
+  const paraphraseHook = useParaphraseSRS();
 
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [studyCategory, setStudyCategory] = useState<Category | 'All'>('All');
@@ -107,6 +110,7 @@ export function App() {
         }}
         streakDays={stats.streakDays}
         dueCount={stats.dueTodayCount}
+        paraphraseDueCount={paraphraseHook.dueCards.length}
         settings={settings}
         onToggleTheme={handleToggleTheme}
       />
@@ -125,6 +129,12 @@ export function App() {
             onOpenCardList={() => setCurrentTab('cards')}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenScripts={() => setCurrentTab('scripts')}
+            onOpenParaphrase={() => setCurrentTab('paraphrase')}
+            paraphraseDueCount={paraphraseHook.dueCards.length}
+            paraphraseTotalCount={paraphraseHook.techCards.length}
+            paraphraseHistory={paraphraseHook.history}
+            scriptsCount={scriptsHook.scripts.length}
+            scriptsProgressMap={scriptsHook.progressMap}
           />
         )}
 
@@ -167,6 +177,19 @@ export function App() {
             onAddCardToSRS={addCard}
             onOpenImportExport={() => setIsImportExportOpen(true)}
             scriptsHook={scriptsHook}
+          />
+        )}
+
+        {currentTab === 'paraphrase' && (
+          <ParaphraseView
+            settings={settings}
+            techCards={paraphraseHook.techCards}
+            dueCards={paraphraseHook.dueCards}
+            onRecordEvaluation={paraphraseHook.recordEvaluation}
+            onImportFlashcards={paraphraseHook.importFlashcards}
+            flashcards={cards}
+            onResetCard={paraphraseHook.resetCard}
+            onRestoreSeedCards={paraphraseHook.restoreSeedCards}
           />
         )}
       </main>

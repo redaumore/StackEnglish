@@ -1,8 +1,6 @@
-import { useState } from 'react';
+import React from 'react';
 import {
   Sparkles,
-  Clock,
-  CheckCircle2,
   Flame,
   ArrowRight,
   Plus,
@@ -10,9 +8,13 @@ import {
   Zap,
   MessageSquareQuote,
   Brain,
+  Mic,
+  Activity,
+  TrendingUp,
 } from 'lucide-react';
 import type { Category, DeckStats, UserSettings } from '../types/srs';
-import { ALL_CATEGORIES, CATEGORY_STYLES } from '../utils/categoryColors';
+import type { EvaluationResult } from '../types/techCard';
+import type { ScriptProgressMap } from '../types/script';
 
 interface DashboardProps {
   stats: DeckStats;
@@ -22,6 +24,12 @@ interface DashboardProps {
   onOpenCardList: () => void;
   onOpenSettings: () => void;
   onOpenScripts?: () => void;
+  onOpenParaphrase?: () => void;
+  paraphraseDueCount?: number;
+  paraphraseTotalCount?: number;
+  paraphraseHistory?: EvaluationResult[];
+  scriptsCount?: number;
+  scriptsProgressMap?: ScriptProgressMap;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -31,344 +39,403 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenAddCard,
   onOpenCardList,
   onOpenScripts,
+  onOpenParaphrase,
+  paraphraseDueCount = 0,
+  paraphraseTotalCount = 0,
+  paraphraseHistory = [],
+  scriptsCount = 0,
+  scriptsProgressMap = {},
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
+  // 1. Metric: Flashcard Retention Rate & Mastery %
+  const totalReviewed = stats.masteredCardsCount + stats.learningCardsCount;
+  const retentionPercent =
+    stats.totalCards > 0 ? Math.round((stats.masteredCardsCount / stats.totalCards) * 100) : 0;
 
-  const totalSessionCards =
-    selectedCategory === 'All'
-      ? stats.dueTodayCount + Math.min(stats.newCardsAvailableCount, settings.newCardsPerDay)
-      : (stats.categoryBreakdown[selectedCategory]?.due || 0) +
-        Math.min(
-          stats.categoryBreakdown[selectedCategory]?.total -
-            (stats.categoryBreakdown[selectedCategory]?.mastered || 0),
-          settings.newCardsPerDay
-        );
+  // 2. Metric: Oral Paraphrase Score
+  const hasParaphraseHistory = paraphraseHistory.length > 0;
+  const avgParaphraseScore = hasParaphraseHistory
+    ? (
+        paraphraseHistory.reduce((acc, curr) => acc + curr.scores.overallScore, 0) /
+        paraphraseHistory.length
+      ).toFixed(1)
+    : null;
+  const semanticEquivAvg = hasParaphraseHistory
+    ? Math.round(
+        (paraphraseHistory.reduce((acc, curr) => acc + curr.scores.semanticEquivalence, 0) /
+          paraphraseHistory.length /
+          5) *
+          100
+      )
+    : null;
 
-  const estimatedMinutes = Math.max(5, Math.ceil(totalSessionCards * 1.2));
+  // 3. Metric: Speaking / Pronunciation Score from scripts
+  const scriptProgressEntries = Object.values(scriptsProgressMap);
+  const totalEvaluatedLines = scriptProgressEntries.reduce(
+    (acc, prog) => acc + Object.keys(prog.evaluations || {}).length,
+    0
+  );
+  let totalPronunciationScore = 0;
+  let pronunciationCount = 0;
+  scriptProgressEntries.forEach((prog) => {
+    Object.values(prog.evaluations || {}).forEach((ev) => {
+      if (typeof ev.score === 'number') {
+        totalPronunciationScore += ev.score;
+        pronunciationCount++;
+      }
+    });
+  });
+  const avgPronunciationScore =
+    pronunciationCount > 0 ? Math.round(totalPronunciationScore / pronunciationCount) : null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
-      {/* Hero Header */}
+      {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1 text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
             <Zap className="w-3.5 h-3.5" />
-            <span>Spaced Repetition Engine • SM-2</span>
+            <span>Executive Performance Hub</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Software Engineering English
+            Daily Practice & Overview
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1 max-w-2xl text-sm sm:text-base">
-            Master high-impact idiomatic phrases for Kick-offs, Standups, Scope Pushback, System Design reviews, and Blameless Post-Mortems.
+            High-impact deliberate practice across technical vocabulary, oral paraphrase, and engineering speech.
           </p>
         </div>
 
+        {/* Global Streak & Action Header */}
         <div className="flex items-center gap-3 flex-wrap">
-          {onOpenScripts && (
-            <button
-              onClick={onOpenScripts}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 transition-all cursor-pointer shadow-xs"
-            >
-              <MessageSquareQuote className="w-4 h-4 text-indigo-500" />
-              <span>Speaking Scripts</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-300 text-sm font-semibold shadow-xs">
+            <Flame className="w-4 h-4 fill-amber-500 text-amber-500" />
+            <span>
+              {stats.streakDays} {stats.streakDays === 1 ? 'Day' : 'Days'} Streak
+            </span>
+          </div>
 
           <button
             onClick={onOpenAddCard}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 transition-all cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 transition-all cursor-pointer shadow-xs"
           >
             <Plus className="w-4 h-4 text-indigo-500" />
-            <span>Add Custom Phrase</span>
-          </button>
-
-          <button
-            onClick={() => onStartStudy(selectedCategory)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
-          >
-            <Play className="w-4 h-4 fill-white" />
-            <span>Start Session</span>
+            <span>Add Card</span>
           </button>
         </div>
       </div>
 
-      {/* Primary 4 Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {/* Metric 1: Due Today */}
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs transition-all hover:shadow-md">
+      {/* 3 Core Synthetic Metrics (Retención, Parafraseo, Pronunciación) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Metric 1: Retention & Flashcards */}
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs transition-all hover:shadow-md group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Due For Review
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <Brain className="w-3.5 h-3.5 text-indigo-500" />
+              SM-2 Retention
             </span>
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
-            </div>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+              {stats.masteredCardsCount}/{stats.totalCards} Mastered
+            </span>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
+
+          <div className="mt-4 flex items-baseline gap-2">
             <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
-              {stats.dueTodayCount}
+              {retentionPercent}%
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">cards</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">mastery rate</span>
           </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
-            Scheduled by SM-2 algorithm
-          </p>
+
+          <div className="mt-3 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div
+              className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+              style={{ width: `${retentionPercent}%` }}
+            />
+          </div>
+
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+            <span>{totalReviewed} phrases in review</span>
+            <button
+              onClick={onOpenCardList}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              Deck Detail <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
 
-        {/* Metric 2: New Available */}
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs transition-all hover:shadow-md">
+        {/* Metric 2: Oral Paraphrase */}
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs transition-all hover:shadow-md group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              New In Deck
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <Mic className="w-3.5 h-3.5 text-violet-500" />
+              Oral Paraphrase
             </span>
-            <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-500 flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
-            </div>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800">
+              {paraphraseHistory.length} Sessions
+            </span>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
+
+          <div className="mt-4 flex items-baseline gap-2">
             <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
-              {stats.newCardsAvailableCount}
+              {avgParaphraseScore ? `${avgParaphraseScore}/5` : '—'}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              ({settings.newCardsPerDay} / day limit)
+              {avgParaphraseScore ? 'avg performance' : 'No evaluations yet'}
             </span>
           </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Unstudied professional phrases
-          </p>
-        </div>
 
-        {/* Metric 3: Mastered */}
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs transition-all hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Mastered Phrases
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400">
-              {stats.masteredCardsCount}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              / {stats.totalCards} total
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Interval &ge; 21 days (Long-term retention)
-          </p>
-        </div>
-
-        {/* Metric 4: Streak */}
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs transition-all hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Daily Streak
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Flame className="w-4 h-4 fill-amber-500" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl sm:text-4xl font-extrabold text-amber-600 dark:text-amber-400">
-              {stats.streakDays}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {stats.streakDays === 1 ? 'day' : 'consecutive days'}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            {stats.todayReviewedCount > 0
-              ? `Completed ${stats.todayReviewedCount} reviews today!`
-              : 'Study today to maintain streak'}
-          </p>
-        </div>
-      </div>
-
-      {/* Session Quick Launch Hero Banner */}
-      <div className="rounded-3xl bg-gradient-to-br from-indigo-900/90 via-slate-900 to-slate-950 border border-indigo-500/30 p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
-        <div className="absolute right-0 top-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
-
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Recommended 20-minute daily session limit</span>
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Ready for your daily retention sprint?
-            </h2>
-
-            <p className="text-slate-300 text-sm sm:text-base max-w-xl">
-              You have <span className="font-semibold text-indigo-300">{stats.dueTodayCount} due reviews</span> and up to{' '}
-              <span className="font-semibold text-indigo-300">{Math.min(stats.newCardsAvailableCount, settings.newCardsPerDay)} new phrases</span> queued today. Focus mode with built-in voice playback and keyboard navigation.
-            </p>
-
-            {/* Category Filter Pills */}
-            <div className="space-y-2 pt-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Filter by meeting context:
-              </span>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory('All')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                    selectedCategory === 'All'
-                      ? 'bg-white text-slate-950 font-bold shadow'
-                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700'
-                  }`}
-                >
-                  All Categories ({stats.totalCards})
-                </button>
-                {ALL_CATEGORIES.map((cat) => {
-                  const catStat = stats.categoryBreakdown[cat];
-                  const isSelected = selectedCategory === cat;
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-white text-slate-950 font-bold shadow'
-                          : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700'
-                      }`}
-                    >
-                      {cat} ({catStat ? catStat.total : 0})
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="mt-3 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div
+              className="bg-violet-600 h-full rounded-full transition-all duration-500"
+              style={{ width: `${semanticEquivAvg ?? (avgParaphraseScore ? (parseFloat(avgParaphraseScore) / 5) * 100 : 0)}%` }}
+            />
           </div>
 
-          {/* Session CTA Card */}
-          <div className="bg-slate-900/90 backdrop-blur border border-slate-800 rounded-2xl p-6 text-center space-y-4 shadow-lg">
-            <div className="space-y-1">
-              <div className="text-xs uppercase font-mono text-slate-400 font-medium">Session Estimate</div>
-              <div className="text-3xl font-extrabold text-white font-mono">
-                ~{estimatedMinutes} min
-              </div>
-              <div className="text-xs text-slate-400">
-                {totalSessionCards} cards in this study batch
-              </div>
-            </div>
-
-            <div className="space-y-2">
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+            <span>
+              {semanticEquivAvg ? `${semanticEquivAvg}% semantic match` : `${paraphraseTotalCount} tech concepts`}
+            </span>
+            {onOpenParaphrase && (
               <button
-                onClick={() => onStartStudy(selectedCategory, 'standard')}
-                className="w-full py-3 px-5 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                onClick={onOpenParaphrase}
+                className="text-violet-600 dark:text-violet-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <Play className="w-4 h-4 fill-current" />
-                <span>Start Daily Session</span>
+                Paraphrase Detail <ArrowRight className="w-3 h-3" />
               </button>
+            )}
+          </div>
+        </div>
 
-              {stats.learningCardsCount + stats.masteredCardsCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onStartStudy(selectedCategory, 'reviewed_only')}
-                  className="w-full py-2 px-3 rounded-xl font-semibold text-xs bg-slate-800/90 hover:bg-slate-700 text-amber-300 border border-amber-500/30 hover:border-amber-500/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Brain className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Practice Studied Cards ({stats.learningCardsCount + stats.masteredCardsCount} Active Recall)</span>
-                </button>
-              )}
-            </div>
+        {/* Metric 3: Pronunciation & Fluency */}
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs transition-all hover:shadow-md group">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-emerald-500" />
+              Pronunciation & Flow
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+              {totalEvaluatedLines} Lines Spoken
+            </span>
+          </div>
 
-            <div className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
-              <span>Shortcuts:</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px]">
-                Space
-              </kbd>
-              <span>to flip</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px]">
-                1-4
-              </kbd>
-              <span>to grade</span>
-            </div>
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
+              {avgPronunciationScore !== null ? `${avgPronunciationScore}%` : '—'}
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {avgPronunciationScore !== null ? 'fluency index' : 'Pending assessment'}
+            </span>
+          </div>
+
+          <div className="mt-3 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div
+              className="bg-emerald-600 h-full rounded-full transition-all duration-500"
+              style={{ width: `${avgPronunciationScore ?? 0}%` }}
+            />
+          </div>
+
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+            <span>{scriptsCount} engineering scripts</span>
+            {onOpenScripts && (
+              <button
+                onClick={onOpenScripts}
+                className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                Scripts Detail <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Category Breakdown Section */}
+      {/* Practice Modules (Interactive Exercise Action Center) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-              Meeting Context Mastery Breakdown
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Track retention and review load across all technical interaction scenarios.
-            </p>
-          </div>
-          <button
-            onClick={onOpenCardList}
-            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <span>Explore Deck</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-indigo-500" />
+            <span>Practice Hub</span>
+          </h2>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            Select an exercise module to begin your daily deliberate session
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {ALL_CATEGORIES.map((category) => {
-            const style = CATEGORY_STYLES[category];
-            const catStat = stats.categoryBreakdown[category] || { total: 0, mastered: 0, due: 0 };
-            const percent = catStat.total > 0 ? Math.round((catStat.mastered / catStat.total) * 100) : 0;
-
-            return (
-              <div
-                key={category}
-                className={`rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 transition-all hover:border-slate-300 dark:hover:border-slate-700 shadow-xs ${style.cardGlow}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span
-                      className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${style.badgeBg} ${style.badgeText} ${style.badgeBorder}`}
-                    >
-                      {category}
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">
-                      {style.description}
-                    </p>
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Module 1: Flashcards */}
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  <Brain className="w-5 h-5" />
                 </div>
+                {stats.dueTodayCount > 0 ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 animate-pulse">
+                    {stats.dueTodayCount} Due Today
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
+                    Up to date
+                  </span>
+                )}
+              </div>
 
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-medium">
-                    <span className="text-slate-600 dark:text-slate-400">Mastery Progress</span>
-                    <span className="font-mono text-slate-900 dark:text-white">{percent}%</span>
-                  </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Flashcard Recall (SM-2)
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Active recall drills on idiomatic idioms for Standups, Post-Mortems, and System Reviews.
+                </p>
+              </div>
 
-                  <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${percent}%`,
-                        backgroundColor: style.accentColor,
-                      }}
-                    ></div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
-                    <span>
-                      {catStat.mastered} of {catStat.total} mastered
-                    </span>
-                    {catStat.due > 0 ? (
-                      <span className="text-rose-500 font-semibold">{catStat.due} due today</span>
-                    ) : (
-                      <span className="text-emerald-500 font-medium">All caught up</span>
-                    )}
-                  </div>
+              <div className="pt-2 grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 block text-[11px]">Due Reviews</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-mono">
+                    {stats.dueTodayCount}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 block text-[11px]">Daily Limit</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-mono">
+                    {settings.newCardsPerDay} new
+                  </span>
                 </div>
               </div>
-            );
-          })}
+            </div>
+
+            <div className="pt-6 mt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+              <button
+                onClick={() => onStartStudy('All', 'standard')}
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Play className="w-4 h-4 fill-white" />
+                <span>Start Review Session</span>
+              </button>
+              <button
+                onClick={onOpenCardList}
+                className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>View Deck & Metrics</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Module 2: Oral Paraphrase */}
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shadow-xs hover:border-violet-300 dark:hover:border-violet-800 transition-all">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold">
+                  <Mic className="w-5 h-5" />
+                </div>
+                {paraphraseDueCount > 0 ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 animate-pulse">
+                    {paraphraseDueCount} Due Now
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    Ready to practice
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Oral Paraphrase (Voice AI)
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Express technical concepts with forbidden-word constraints to build rapid spontaneous phrasing.
+                </p>
+              </div>
+
+              <div className="pt-2 grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 block text-[11px]">Due Queue</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-mono">
+                    {paraphraseDueCount}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 block text-[11px]">Deck Size</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-mono">
+                    {paraphraseTotalCount} cards
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 mt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+              <button
+                onClick={onOpenParaphrase}
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Mic className="w-4 h-4" />
+                <span>Practice Paraphrase</span>
+              </button>
+              <button
+                onClick={onOpenParaphrase}
+                className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>Metrics & Radar</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Module 3: Speaking Scripts */}
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between shadow-xs hover:border-emerald-300 dark:hover:border-emerald-800 transition-all">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <MessageSquareQuote className="w-5 h-5" />
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
+                  {scriptsCount} Scripts
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Speaking Scripts & Scenarios
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Full dialogue rehearsals for 1-on-1s, client demos, cross-team syncs, and executive updates.
+                </p>
+              </div>
+
+              <div className="pt-2 grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 block text-[11px]">Practiced Lines</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-mono">
+                    {totalEvaluatedLines}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-400 block text-[11px]">Avg Score</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white font-mono">
+                    {avgPronunciationScore !== null ? `${avgPronunciationScore}%` : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 mt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+              <button
+                onClick={onOpenScripts}
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Launch Dialogues</span>
+              </button>
+              <button
+                onClick={onOpenScripts}
+                className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <span>Explore Scenarios</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

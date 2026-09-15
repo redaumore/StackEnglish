@@ -8,16 +8,18 @@ import {
   Sun,
   Moon,
   MessageSquareQuote,
+  Mic,
 } from 'lucide-react';
 import type { UserSettings } from '../types/srs';
 
-export type NavTab = 'dashboard' | 'study' | 'cards' | 'scripts' | 'settings';
+export type NavTab = 'dashboard' | 'study' | 'cards' | 'scripts' | 'paraphrase' | 'settings';
 
 interface HeaderProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   streakDays: number;
   dueCount: number;
+  paraphraseDueCount?: number;
   settings: UserSettings;
   onToggleTheme: () => void;
 }
@@ -27,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTab,
   streakDays,
   dueCount,
+  paraphraseDueCount = 0,
   settings,
   onToggleTheme,
 }) => {
@@ -92,6 +95,30 @@ export const Header: React.FC<HeaderProps> = ({
                   }`}
                 >
                   {dueCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => onSelectTab('paraphrase')}
+              className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all cursor-pointer relative ${
+                currentTab === 'paraphrase'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900'
+              }`}
+            >
+              <Mic className="w-4 h-4" />
+              <span className="hidden lg:inline">Oral </span>
+              <span>Paraphrase</span>
+              {paraphraseDueCount > 0 && (
+                <span
+                  className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                    currentTab === 'paraphrase'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-violet-600 text-white animate-pulse'
+                  }`}
+                >
+                  {paraphraseDueCount}
                 </span>
               )}
             </button>
@@ -196,6 +223,25 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
           <span className="text-[10px] tracking-tight">Study</span>
+        </button>
+
+        <button
+          onClick={() => onSelectTab('paraphrase')}
+          className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-lg transition-all cursor-pointer relative ${
+            currentTab === 'paraphrase'
+              ? 'text-indigo-600 dark:text-indigo-400 font-semibold'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+          }`}
+        >
+          <div className="relative">
+            <Mic className="w-5 h-5 mb-0.5" />
+            {paraphraseDueCount > 0 && (
+              <span className="absolute -top-1 -right-2 px-1 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold bg-violet-600 text-white animate-pulse">
+                {paraphraseDueCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] tracking-tight">Paraphrase</span>
         </button>
 
         <button
