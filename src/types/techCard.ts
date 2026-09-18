@@ -26,6 +26,7 @@ export interface EvaluationRequest {
 
 export interface EvaluationResult {
   cardId: string;
+  userTranscript?: string;
   scores: {
     semanticEquivalence: number; // 1.0 - 5.0 (Weight: 40%)
     lexicalCompliance: number;   // 1.0 - 5.0 (Weight: 20%)

@@ -20,7 +20,7 @@ PARAMETROS DE ENTRADA:
 
 DIMENSIONES DE EVALUACION (Escala 1.0 a 5.0):  
 1. semanticEquivalence (Peso 40%): ¿Comunica con claridad la acción, el alcance y el objetivo técnico de la frase modelo?  
-2. lexicalCompliance (Peso 20%): Asigna 5.0 si NO empleó ninguna de las palabras en forbidden_words (ni sus variantes directas). Si empleó una o más, califica severamente (1.0 a 2.5) y regístralas en repeatedForbiddenWords.  
+2. lexicalCompliance (Peso 20%): Verifica si el usuario utilizó alguna de las palabras en forbidden_words (o sus raíces/variantes directas) DENTRO de user_transcript. Si NO empleó ninguna de ellas en user_transcript, asigna 5.0 y deja repeatedForbiddenWords como array vacío ([]). Solo si realmente aparecen en user_transcript, califica severamente (1.0 a 2.5) y regístralas en repeatedForbiddenWords. NO incluyas palabras de forbidden_words a menos que figuren expresamente en user_transcript.  
 3. grammarAndSyntax (Peso 25%): Evalúa concordancia, tiempos verbales, preposiciones de interfaz ("on the screen", no "in"), régimen verbal ("respond to") y falsos cognados de ortografía ("strange", no "extrange").  
 4. vocabularyRange (Peso 15%): Empleo de vocabulario técnico contextual adecuado (peers, review, patch, issue) en lugar de muletillas simplistas.
 
@@ -162,6 +162,7 @@ export class ParaphraseEvaluationService {
 
       return {
         cardId: req.cardId,
+        userTranscript: req.userTranscript,
         scores: {
           semanticEquivalence: sem,
           lexicalCompliance: lex,
@@ -233,6 +234,7 @@ export class ParaphraseEvaluationService {
 
     return {
       cardId: req.cardId,
+      userTranscript: req.userTranscript,
       scores: {
         semanticEquivalence,
         lexicalCompliance,

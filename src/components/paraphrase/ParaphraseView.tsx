@@ -648,7 +648,7 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
                   </div>
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
                     {renderUserTranscript(
-                      sessionCards[currentIndex]?.sourcePhrase || '',
+                      evaluationResult.userTranscript || evaluationResult.insights.polishedSentence || '',
                       evaluationResult.insights.repeatedForbiddenWords
                     )}
                   </p>
