@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mic,
   Square,
@@ -22,6 +22,7 @@ import { OpenAITTSService } from '../../services/OpenAITTSService';
 import { SpeechService } from '../../services/SpeechService';
 import { convertBlobToWav } from '../../utils/audioConversion';
 import { getEnvOpenAIApiKey } from '../../utils/env';
+import { shuffleArray } from '../../utils/shuffle';
 import { ParaphraseAnalyticsDashboard } from './ParaphraseAnalyticsDashboard';
 
 interface ParaphraseViewProps {
@@ -53,12 +54,17 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
   const [activeView, setActiveView] = useState<ViewMode>('practice');
   const effectiveApiKey = (settings.openAIApiKey || getEnvOpenAIApiKey())?.trim();
 
-  // Current queue of cards to review: due cards prioritized, or fallback to all tech cards
-  const sessionCards = useMemo(() => {
-    return dueCards.length > 0 ? dueCards : techCards;
-  }, [dueCards, techCards]);
-
+  // Current queue of cards to review: due cards prioritized, or fallback to all tech cards, shuffled for every session
+  const rawCards = dueCards.length > 0 ? dueCards : techCards;
+  const [sessionCards, setSessionCards] = useState<TechCard[]>(() => shuffleArray(rawCards));
+  const [prevRawCards, setPrevRawCards] = useState<TechCard[]>(rawCards);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (prevRawCards !== rawCards) {
+    setPrevRawCards(rawCards);
+    setSessionCards(shuffleArray(rawCards));
+    setCurrentIndex(0);
+  }
 
   // State machine
   const [state, setState] = useState<PracticeState>('IDLE');
@@ -332,7 +338,9 @@ export const ParaphraseView: React.FC<ParaphraseViewProps> = ({
     if (currentIndex + 1 < sessionCards.length) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // Completed current queue
+      // Completed current queue, shuffle for the next cycle
+      const rawCards = dueCards.length > 0 ? dueCards : techCards;
+      setSessionCards(shuffleArray(rawCards));
       setCurrentIndex(0);
     }
   };

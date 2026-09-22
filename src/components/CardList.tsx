@@ -20,6 +20,7 @@ import {
 import type { Category, DeckStats, Grade, SRSCard, UserSettings } from '../types/srs';
 import { ALL_CATEGORIES, CATEGORY_STYLES } from '../utils/categoryColors';
 import { formatInterval, isCardDue, isCardMastered, isCardNew } from '../utils/sm2';
+import { shuffleArray } from '../utils/shuffle';
 import { AudioButton } from './AudioButton';
 import { FlashcardRadarChart } from './FlashcardRadarChart';
 import { Flashcard } from './Flashcard';
@@ -64,8 +65,13 @@ export const CardList: React.FC<CardListProps> = ({
   onResetCardProgress,
   onOpenImportExport,
 }) => {
-  const [internalView, setInternalView] = useState<ViewMode>(initialView);
-  const activeView = initialView ?? internalView;
+  const [activeView, setInternalView] = useState<ViewMode>(initialView);
+  const [prevInitialView, setPrevInitialView] = useState<ViewMode>(initialView);
+
+  if (prevInitialView !== initialView) {
+    setPrevInitialView(initialView);
+    setInternalView(initialView);
+  }
 
   const handleViewChange = (mode: ViewMode) => {
     setInternalView(mode);
@@ -97,7 +103,7 @@ export const CardList: React.FC<CardListProps> = ({
     });
   }, [cards, exerciseCategory, exerciseMode]);
 
-  const [queue, setQueue] = useState<SRSCard[]>(eligibleSessionCards);
+  const [queue, setQueue] = useState<SRSCard[]>(() => shuffleArray(eligibleSessionCards));
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
   const [isSessionCompleted, setIsSessionCompleted] = useState<boolean>(false);
@@ -122,6 +128,9 @@ export const CardList: React.FC<CardListProps> = ({
   });
 
   const handleStartSession = useCallback(() => {
+    setQueue((prev) => shuffleArray(prev));
+    setCurrentIndex(0);
+    setIsCardFlipped(false);
     setIsSessionStarted(true);
     timerStartRef.current();
   }, []);
@@ -137,7 +146,7 @@ export const CardList: React.FC<CardListProps> = ({
         if (newMode === 'due') return isCardDue(c);
         return true;
       });
-      setQueue(newQueue);
+      setQueue(shuffleArray(newQueue));
       setCurrentIndex(0);
       setIsCardFlipped(false);
       setIsSessionCompleted(false);

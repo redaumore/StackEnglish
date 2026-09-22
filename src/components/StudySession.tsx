@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { Category, Grade, SRSCard, UserSettings } from '../types/srs';
 import { useTimer } from '../hooks/useTimer';
+import { shuffleArray } from '../utils/shuffle';
 import { Flashcard } from './Flashcard';
 
 interface StudySessionProps {
@@ -37,7 +38,7 @@ export const StudySession = ({
   onFinishSession,
   onExitToDashboard,
 }: StudySessionProps) => {
-  const [queue, setQueue] = useState<SRSCard[]>(sessionCards);
+  const [queue, setQueue] = useState<SRSCard[]>(() => shuffleArray(sessionCards));
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);

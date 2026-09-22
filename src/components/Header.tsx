@@ -3,7 +3,6 @@ import {
   Flame,
   Layers,
   Sparkles,
-  BookOpen,
   Settings as SettingsIcon,
   Sun,
   Moon,
@@ -135,19 +134,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden lg:inline">Speaking </span>
               <span>Scripts</span>
             </button>
-
-            <button
-              onClick={() => onSelectTab('cards')}
-              className={`px-2.5 lg:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                currentTab === 'cards'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden lg:inline">Deck </span>
-              <span>Library</span>
-            </button>
           </nav>
 
           {/* Right Tools: Streak, Theme Toggle, Settings */}
@@ -254,18 +240,6 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <MessageSquareQuote className="w-5 h-5 mb-0.5" />
           <span className="text-[10px] tracking-tight">Scripts</span>
-        </button>
-
-        <button
-          onClick={() => onSelectTab('cards')}
-          className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-lg transition-all cursor-pointer ${
-            currentTab === 'cards'
-              ? 'text-indigo-600 dark:text-indigo-400 font-semibold'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-          }`}
-        >
-          <BookOpen className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] tracking-tight">Decks</span>
         </button>
       </nav>
     </>
